@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
+/dts-v1/;
+
+#include "sm8550.dtsi"
+
+/ {
+ 	model = "Xiaomi 13 Pro";
+ 	compatible = "xiaomi,nuwa", "qcom,sm8550";
+	chassis-type = "handset";
+	
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		
+		framebuffer@b8000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xb8000000 0x0 0x2b00000>;
+			width = <1440>;
+			height = <3200>;
+			stride = <(1440 * 4)>;
+			format = "a8r8g8b8";
+			/*
+			 * That's (going to be) a lot of clocks, but it's necessary due
+			 * to unused clk cleanup & no panel driver yet
+			 */
+			clocks = <&gcc GCC_DISP_HF_AXI_CLK>,
+				 <&gcc GCC_DISP_SF_AXI_CLK>;
+		};
+	};
+	
+	reserved-memory {
+		/*
+		 * The bootloader will only keep display hardware enabled
+		 * if this memory region is named exactly 'splash_region'
+		 */
+		splash_region {
+			reg = <0x0 0xb8000000 0x0 0x2b00000>;
+			no-map;
+		};
+	};
+};
+
+&tlmm {
+	gpio-reserved-ranges = <36 4>; //FIXME
+};
