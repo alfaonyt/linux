@@ -26,7 +26,7 @@
 		#size-cells = <2>;
 		ranges;
 		
-		framebuffer@b8000000 {
+		framebuffer: framebuffer@b8000000 {
 			compatible = "simple-framebuffer";
 			reg = <0x0 0xb8000000 0x0 0x2b00000>;
 			width = <1440>;
@@ -557,6 +557,30 @@
 
 &dispcc {
  status = "disabled";
+};
+
+&i2c_master_hub_0 {
+	status = "okay";
+};
+
+&i2c_hub_2 {
+	status = "okay";
+
+	typec-mux@42 {
+		compatible = "fcs,fsa4480";
+		reg = <0x42>;
+
+		vcc-supply = <&vreg_bob1>;
+
+		mode-switch;
+		orientation-switch;
+
+		port {
+			fsa4480_sbu_mux: endpoint {
+				remote-endpoint = <&pmic_glink_sbu>;
+			};
+		};
+	};
 };
 
 &pm8550b_eusb2_repeater {
