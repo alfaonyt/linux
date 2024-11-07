@@ -92,7 +92,7 @@
 		 * but given the same address every time. Hard code it as this address is
 		 * where the modem firmware expects it to be.
 		 */
-		rmtfs_mem: rmtfs-region@fdd00000 {
+		rmtfs_mem: memory@fdd00000 {
 			reg = <0x0 0xfdd00000 0x0 0x280000>;
 			no-map;
 		};
@@ -101,7 +101,7 @@
 		 * The bootloader will only keep display hardware enabled
 		 * if this memory region is named exactly 'splash_region'
 		 */
-		splash_region {
+		splash_region@b8000000 {
 			reg = <0x0 0xb8000000 0x0 0x2b00000>;
 			no-map;
 		};
