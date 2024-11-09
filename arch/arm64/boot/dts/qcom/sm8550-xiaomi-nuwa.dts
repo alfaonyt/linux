@@ -21,6 +21,26 @@
 	compatible = "xiaomi,nuwa", "qcom,sm8550";
 	chassis-type = "handset";
 
+	
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		bootargs = "earlycon clk_ignore_unused pd_ignore_unused console=tty0 PMOS_NOSPLASH";
+
+		framebuffer: framebuffer@b8000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xb8000000 0x0 0x2b00000>;
+			width = <1440>;
+			height = <3200>;
+			stride = <(1440 * 4)>;
+			format = "a8r8g8b8";
+
+			clocks = <&gcc GCC_DISP_HF_AXI_CLK>;
+		};
+	};
+
 	pmic-glink {
 		compatible = "qcom,sm8550-pmic-glink", "qcom,pmic-glink";
 		#address-cells = <1>;
@@ -66,6 +86,11 @@
 	};
 	
 	reserved-memory {
+		splash_region@b8000000 {
+			reg = <0x0 0xb8000000 0x0 0x2b00000>;
+			no-map;
+		};
+
 		/*
 		 * The rmtfs memory region in downstream is 'dynamically allocated'
 		 * but given the same address every time. Hard code it as this address is
@@ -558,6 +583,7 @@
 	vdd3-supply = <&vreg_l5b_3p1>;
 };
 
+/*
 &mdss {
 	status = "okay";
 };
@@ -592,10 +618,13 @@
 	vdds-supply = <&vreg_l1e_0p88>;
 	status = "okay";
 };
+*/
 
+/*
 &gpu {
 	status = "okay";
 };
+*/
 
 &tlmm {
 	gpio-reserved-ranges = <32 8>;
@@ -634,11 +663,18 @@
 };
 
 &usb_1 {
+	/* USB 2.0 only */
+	qcom,select-utmi-as-pipe-clk;
 	status = "okay";
 };
 
 &usb_1_dwc3 {
+	dr_mode = "otg";
+	usb-role-switch;
 	maximum-speed = "high-speed";
+	/* Remove USB3 phy */
+	phys = <&usb_1_hsphy>;
+	phy-names = "usb2-phy";
 };
 
 &usb_1_dwc3_hs {
