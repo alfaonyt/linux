@@ -28,17 +28,6 @@
 		ranges;
 
 		bootargs = "earlycon clk_ignore_unused pd_ignore_unused console=tty0 PMOS_NOSPLASH";
-
-		framebuffer: framebuffer@b8000000 {
-			compatible = "simple-framebuffer";
-			reg = <0x0 0xb8000000 0x0 0x2b00000>;
-			width = <1440>;
-			height = <3200>;
-			stride = <(1440 * 4)>;
-			format = "a8r8g8b8";
-
-			clocks = <&gcc GCC_DISP_HF_AXI_CLK>;
-		};
 	};
 
 	pmic-glink {
@@ -86,11 +75,6 @@
 	};
 	
 	reserved-memory {
-		splash_region@b8000000 {
-			reg = <0x0 0xb8000000 0x0 0x2b00000>;
-			no-map;
-		};
-
 		/*
 		 * The rmtfs memory region in downstream is 'dynamically allocated'
 		 * but given the same address every time. Hard code it as this address is
@@ -508,66 +492,6 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 	};
-
-	regulators-7 {
-		compatible = "qcom,pm8010-rpmh-regulators";
-		qcom,pmic-id = "n";
-
-		vdd-l1-l2-supply = <&vreg_s4g_1p3>;
-		vdd-l3-l4-supply = <&vreg_bob2>;
-		vdd-l5-supply = <&vreg_s6g_1p8>;
-		vdd-l6-supply = <&vreg_bob1>;
-		vdd-l7-supply = <&vreg_bob1>;
-
-		vreg_l1n_1p1: ldo1 {
-			regulator-name = "vreg_l1n_1p1";
-			regulator-min-microvolt = <1104000>;
-			regulator-max-microvolt = <1200000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-
-		vreg_l2n_1p1: ldo2 {
-			regulator-name = "vreg_l2n_1p1";
-			regulator-min-microvolt = <1104000>;
-			regulator-max-microvolt = <1200000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-
-		vreg_l3n_2p8: ldo3 {
-			regulator-name = "vreg_l3n_2p8";
-			regulator-min-microvolt = <2800000>;
-			regulator-max-microvolt = <3000000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-
-		vreg_l4n_2p8: ldo4 {
-			regulator-name = "vreg_l4n_2p8";
-			regulator-min-microvolt = <2800000>;
-			regulator-max-microvolt = <3300000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-
-		vreg_l5n_1p8: ldo5 {
-			regulator-name = "vreg_l5n_1p8";
-			regulator-min-microvolt = <1800000>;
-			regulator-max-microvolt = <1800000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-
-		vreg_l6n_3p3: ldo6 {
-			regulator-name = "vreg_l6n_3p3";
-			regulator-min-microvolt = <2800000>;
-			regulator-max-microvolt = <3304000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-
-		vreg_l7n_2p96: ldo7 {
-			regulator-name = "vreg_l7n_2p96";
-			regulator-min-microvolt = <2800000>;
-			regulator-max-microvolt = <2960000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-	};
 };
 
 &dispcc {
@@ -603,7 +527,6 @@
 	vdd3-supply = <&vreg_l5b_3p1>;
 };
 
-/*
 &mdss {
 	status = "okay";
 };
@@ -613,7 +536,7 @@
 	status = "okay";
 
 	display_panel: panel@0 {
-		compatible = "tcl,m2a-dsc";
+		compatible = "samsung,amb673cp01-m2";
 		reg = <0>;
 
 		pinctrl-names = "default", "sleep";
@@ -638,13 +561,10 @@
 	vdds-supply = <&vreg_l1e_0p88>;
 	status = "okay";
 };
-*/
 
-/*
 &gpu {
 	status = "okay";
 };
-*/
 
 &tlmm {
 	gpio-reserved-ranges = <32 8>;
@@ -708,4 +628,12 @@
 	phys = <&pm8550b_eusb2_repeater>;
 
 	status = "okay";
+};
+
+&sleep_clk {
+	clock-frequency = <32000>;
+};
+
+&xo_board {
+	clock-frequency = <76800000>;
 };

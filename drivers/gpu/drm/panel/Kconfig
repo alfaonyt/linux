@@ -656,6 +656,16 @@ config DRM_PANEL_RONBO_RB070D30
 	  Say Y here if you want to enable support for Ronbo Electronics
 	  RB070D30 1024x600 DSI panel.
 
+config DRM_PANEL_SAMSUNG_AMB673CP01_M2
+	tristate "Samsung AMB673CP01 M2 panel"
+	depends on OF
+	depends on DRM_MIPI_DSI
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  Say Y or M here if you want to enable support for the
+	  Samsung AMB673CP01 (3200x1440@120Hz) CMD mode panel found in the
+	  Xiaomi 13 Pro smartphones.
+
 config DRM_PANEL_SAMSUNG_AMS581VF01
 	tristate "Samsung AMS581VF01 panel"
 	depends on OF
@@ -984,17 +994,6 @@ config DRM_PANEL_SYNAPTICS_R63353
 	help
 	  Say Y if you want to enable support for panels based on the
 	  Synaptics R63353 controller.
-
-
-config DRM_PANEL_TCL_M2A_DSC
-	tristate "TCL M2A DSC DSI command mode panel driver"
-	depends on OF
-	depends on DRM_MIPI_DSI
-	depends on BACKLIGHT_CLASS_DEVICE
-	select VIDEOMODE_HELPERS
-	help
-	  Say Y or M here if you want to enable support for the Xiaomi AMOLED
-	  (3200x1440@120Hz) command mode panel found in the Xiaomi 13 Pro smartphones.
 
 
 config DRM_PANEL_TDO_TL070WSH30
