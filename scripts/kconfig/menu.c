@@ -15,7 +15,7 @@
 
 static const char nohelp_text[] = "There is no help available for this option.";
 
-struct menu rootmenu;
+struct menu rootmenu = { .type = M_MENU };
 static struct menu **last_entry_ptr;
 
 /**
@@ -65,12 +65,13 @@ void _menu_init(void)
 	last_entry_ptr = &rootmenu.list;
 }
 
-void menu_add_entry(struct symbol *sym)
+void menu_add_entry(struct symbol *sym, enum menu_type type)
 {
 	struct menu *menu;
 
 	menu = xmalloc(sizeof(*menu));
 	memset(menu, 0, sizeof(*menu));
+	menu->type = type;
 	menu->sym = sym;
 	menu->parent = current_menu;
 	menu->filename = cur_filename;
@@ -533,6 +534,7 @@ bool menu_is_empty(struct menu *menu)
 
 bool menu_is_visible(struct menu *menu)
 {
+	struct menu *child;
 	struct symbol *sym;
 	tristate visible;
 
@@ -551,7 +553,17 @@ bool menu_is_visible(struct menu *menu)
 	} else
 		visible = menu->prompt->visible.tri = expr_calc_value(menu->prompt->visible.expr);
 
-	return visible != no;
+	if (visible != no)
+		return true;
+
+	if (!sym || sym_get_tristate_value(menu->sym) == no)
+		return false;
+
+	for (child = menu->list; child; child = child->next)
+		if (menu_is_visible(child))
+			return true;
+
+	return false;
 }
 
 const char *menu_get_prompt(const struct menu *menu)
