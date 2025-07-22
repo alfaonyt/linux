@@ -1,0 +1,15 @@
+diff a/arch/arm64/kernel/vmlinux.lds.S b/arch/arm64/kernel/vmlinux.lds.S	(rejected hunks)
+@@ -312,8 +324,13 @@ SECTIONS
+ 
+ 	PECOFF_EDATA_PADDING
+ 	__pecoff_data_rawsize = ABSOLUTE(. - __initdata_begin);
++	FDT_EDATA_PADDING /* 2MB aligned */
+ 	_edata = .;
+ 
++#ifdef CONFIG_ARM64_APPENDED_DTB
++	. += (1 << 21);
++#endif
++
+ 	/* start of zero-init region */
+ 	BSS_SECTION(SBSS_ALIGN, 0, 0)
+ 

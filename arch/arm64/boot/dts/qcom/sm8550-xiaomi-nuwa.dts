@@ -12,15 +12,29 @@
 #include "pm8550vs.dtsi"
 #include "pmk8550.dtsi"
 #include "pmr735d_a.dtsi"
-#include "pmr735d_b.dtsi"
 
 /delete-node/ &rmtfs_mem;
+/delete-node/ &adspslpi_mem;
+/delete-node/ &xbl_dt_log_merged_mem;
+/delete-node/ &hwfence_shbuf;
 
 / {
 	model = "Xiaomi 13 Pro";
 	compatible = "xiaomi,nuwa", "qcom,sm8550";
 	chassis-type = "handset";
 
+	memory {
+		ddr_manufacturer_id = <0x06>;
+		ddr_device_type = <0x08>;
+		ufs_ffu_batterystatus = <0x00>;
+		ufs_ffu_bootreason = <0x00>;
+		ddr_size = <0x0c>;
+		device_type = "memory";
+		reg = <0x00 0x80000000 0x00 0xe00000 0x00 0x811d0000 0x00 0x56e30000 0x00 0xd8140000 0x00 0x20000 0x00 0xd8800000 0x00 0x00 0x00 0xe7cb0000 0x00 0x18350000 0x08 0x80000000 0x00 0x39d00000 0x08 0xc0000000 0x00 0xc0000000 0x09 0x80000000 0x01 0x80000000 0x08 0xb9f00000 0x00 0x1e00000>;
+
+		ebuff {
+		};
+	};
 	
 	chosen {
 		#address-cells = <2>;
@@ -75,13 +89,35 @@
 	};
 	
 	reserved-memory {
+		xbl_ramdump_mem: xbl-ramdump-region@81200000 {
+			reg = <0 0x81200000 0 0x280000>;
+			no-map;
+		};
+
+		xbl_dt_log_mem: xbl-dt-log-region@81a00000 {
+			reg = <0 0x81a00000 0 0x40000>;
+			no-map;
+		};
+
+		aop_image_mem: aop-image-region@81c00000 {
+			reg = <0 0x81c00000 0 0x60000>;
+			no-map;
+		};
+		adspslpi_mem: adspslpi-region@9ea00000 {
+			reg = <0 0x9ea00000 0 0x4680000>;
+			no-map;
+		};
 		/*
 		 * The rmtfs memory region in downstream is 'dynamically allocated'
 		 * but given the same address every time. Hard code it as this address is
 		 * where the modem firmware expects it to be.
 		 */
 		rmtfs_mem: memory@fdd00000 {
-			reg = <0x0 0xfdd00000 0x0 0x280000>;
+			reg = <0x0 0xf3500000 0x0 0x280000>;
+			no-map;
+		};
+		hwfence_shbuf: hwfence-shbuf-region@e6440000 {
+			reg = <0 0xe6440000 0 0x2dd000>;
 			no-map;
 		};
 	};
@@ -107,7 +143,7 @@
 
 		vreg_bob1: bob1 {
 			regulator-name = "vreg_bob1";
-			regulator-min-microvolt = <3296000>;
+			regulator-min-microvolt = <3008000>;
 			regulator-max-microvolt = <3960000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-always-on;
@@ -284,15 +320,15 @@
 		vreg_l1e_0p88: ldo1 {
 			regulator-name = "vreg_l1e_0p88";
 			regulator-min-microvolt = <880000>;
-			regulator-max-microvolt = <880000>;
+			regulator-max-microvolt = <912000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-always-on;
 		};
 
 		vreg_l2e_0p9: ldo2 {
 			regulator-name = "vreg_l2e_0p9";
-			regulator-min-microvolt = <904000>;
-			regulator-max-microvolt = <970000>;
+			regulator-min-microvolt = <872000>;
+			regulator-max-microvolt = <972000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -316,14 +352,14 @@
 
 		vreg_s4f_0p5: smps4 {
 			regulator-name = "vreg_s4f_0p5";
-			regulator-min-microvolt = <500000>;
+			regulator-min-microvolt = <300000>;
 			regulator-max-microvolt = <700000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
 		vreg_l1f_0p9: ldo1 {
 			regulator-name = "vreg_l1f_0p9";
-			regulator-min-microvolt = <912000>;
+			regulator-min-microvolt = <880000>;
 			regulator-max-microvolt = <912000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
@@ -367,8 +403,8 @@
 
 		vreg_s2g_0p8: smps2 {
 			regulator-name = "vreg_s2g_0p8";
-			regulator-min-microvolt = <800000>;
-			regulator-max-microvolt = <1000000>;
+			regulator-min-microvolt = <500000>;
+			regulator-max-microvolt = <1036000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-always-on;
 		};
@@ -408,15 +444,15 @@
 
 		vreg_l1g_1p2: ldo1 {
 			regulator-name = "vreg_l1g_1p2";
-			regulator-min-microvolt = <1200000>;
-			regulator-max-microvolt = <1200000>;
+			regulator-min-microvolt = <1144000>;
+			regulator-max-microvolt = <1256000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-always-on;
 		};
 
 		vreg_l2g_1p2: ldo2 {
 			regulator-name = "vreg_l2g_1p2";
-			regulator-min-microvolt = <1200000>;
+			regulator-min-microvolt = <1100000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
@@ -584,6 +620,10 @@
 	};
 };
 
+&pm8010_n {
+	status = "disabled";
+};
+
 &ufs_mem_hc {
 	reset-gpios = <&tlmm 210 GPIO_ACTIVE_LOW>;
 	vcc-supply = <&vreg_l17b_2p5>;
@@ -637,3 +677,5 @@
 &xo_board {
 	clock-frequency = <76800000>;
 };
+
+#include "sm8550-xiaomi-nuwa-simplefb.dts"
