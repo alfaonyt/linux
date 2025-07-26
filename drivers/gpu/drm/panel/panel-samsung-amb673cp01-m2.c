@@ -23,6 +23,11 @@ struct m2_38_0c_0a_dsc {
 	struct mipi_dsi_device *dsi;
 	struct drm_dsc_config dsc;
 	struct gpio_desc *reset_gpio;
+
+	struct regulator *avdd;
+	struct regulator *vci;
+	struct regulator *vddio;
+	struct regulator *vddd;
 };
 
 static inline
@@ -33,9 +38,9 @@ struct m2_38_0c_0a_dsc *to_m2_38_0c_0a_dsc(struct drm_panel *panel)
 
 static void m2_38_0c_0a_dsc_reset(struct m2_38_0c_0a_dsc *ctx)
 {
-	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	//gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 	usleep_range(1000, 2000);
-	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
+	//gpiod_set_value_cansleep(ctx->reset_gpio, 0);
 	usleep_range(5000, 6000);
 }
 
@@ -180,12 +185,36 @@ static int m2_38_0c_0a_dsc_prepare(struct drm_panel *panel)
 	struct drm_dsc_picture_parameter_set pps;
 	int ret;
 
+	ret = regulator_enable(ctx->avdd);
+	if (ret) {
+		dev_err(dev, "failed to enable avdd regulator: %d\n", ret);
+		return ret;
+	}
+	
+	ret = regulator_enable(ctx->vci);
+	if (ret) {
+		dev_err(dev, "failed to enable vci regulator: %d\n", ret);
+		return ret;
+	}
+
+	ret = regulator_enable(ctx->vddio);
+	if (ret) {
+		dev_err(dev, "failed to enable vddio regulator: %d\n", ret);
+		return ret;
+	}
+	
+	ret = regulator_enable(ctx->vddd);
+	if (ret) {
+		dev_err(dev, "failed to enable vddd regulator: %d\n", ret);
+		return ret;
+	}
+
 	m2_38_0c_0a_dsc_reset(ctx);
 
 	ret = m2_38_0c_0a_dsc_on(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
-		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		//gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 		return ret;
 	}
 
@@ -218,7 +247,7 @@ static int m2_38_0c_0a_dsc_unprepare(struct drm_panel *panel)
 	if (ret < 0)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
-	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	//gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 
 	return 0;
 }
@@ -317,10 +346,26 @@ static int m2_38_0c_0a_dsc_probe(struct mipi_dsi_device *dsi)
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
 
-	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
+	ctx->avdd = devm_regulator_get(dev, "avdd");
+	if (IS_ERR(ctx->avdd))
+		return dev_err_probe(dev, PTR_ERR(ctx->avdd), "failed to get avdd regulator\n");
+	
+	ctx->vci = devm_regulator_get(dev, "vci");
+	if (IS_ERR(ctx->vci))
+		return dev_err_probe(dev, PTR_ERR(ctx->vci), "failed to get vci regulator\n");
+
+	ctx->vddio = devm_regulator_get(dev, "vddio");
+	if (IS_ERR(ctx->vddio))
+		return dev_err_probe(dev, PTR_ERR(ctx->vddio), "failed to get vddio regulator\n");
+	
+	ctx->vddd = devm_regulator_get(dev, "vddd");
+	if (IS_ERR(ctx->vddd))
+		return dev_err_probe(dev, PTR_ERR(ctx->vddd), "failed to get vddd regulator\n");
+
+	/*ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio))
 		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
-				     "Failed to get reset-gpios\n");
+				     "Failed to get reset-gpios\n");*/
 
 	ctx->dsi = dsi;
 	mipi_dsi_set_drvdata(dsi, ctx);

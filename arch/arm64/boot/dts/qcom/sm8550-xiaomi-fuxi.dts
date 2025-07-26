@@ -11,7 +11,6 @@
 #include "pm8550ve.dtsi"
 #include "pm8550vs.dtsi"
 #include "pmk8550.dtsi"
-//#include "pmr735d_a.dtsi"
 
 /delete-node/ &rmtfs_mem;
 /delete-node/ &adspslpi_mem;
@@ -37,17 +36,17 @@
 /delete-node/ &hyp_ext_reserved_mem;
 
 / {
-	model = "Xiaomi 13 Pro";
-	compatible = "xiaomi,nuwa", "qcom,sm8550";
+	model = "Xiaomi 13";
+	compatible = "xiaomi,fuxi", "qcom,sm8550";
 	chassis-type = "handset";
 	qcom,msm-id = <0x207 0x20000 0x218 0x20000>;
 	qcom,board-id = <0x10008 0>;
 
 	memory {
-		ddr_manufacturer_id = <0x06>;
+		ddr_manufacturer_id = <0xff>;
 		ddr_device_type = <0x08>;
 		ufs_ffu_batterystatus = <0x00>;
-		ufs_ffu_bootreason = <0x00>;
+		ufs_ffu_bootreason = <0x01>;
 		ddr_size = <0x0c>;
 		device_type = "memory";
 		reg = <0x00 0x80000000 0x00 0xe00000 0x00 0x811d0000 0x00 0x56e30000 0x00 0xd8140000 0x00 0x20000 0x00 0xd8800000 0x00 0x00 0x00 0xe7cb0000 0x00 0x18350000 0x08 0x80000000 0x00 0x39d00000 0x08 0xc0000000 0x00 0xc0000000 0x09 0x80000000 0x01 0x80000000 0x08 0xb9f00000 0x00 0x1e00000>;
@@ -61,7 +60,18 @@
 		#size-cells = <2>;
 		ranges;
 
-		bootargs = "clk_ignore_unused pd_ignore_unused keep_bootcon rootwait ignore_loglevel console=tty0 console=ttyGS0,115200 pmos.debug-shell PMOS_NOSPLASH dwc3.debug=1 phy.debug=1 no_console_suspend qcom_scm.download_mode=mini"; //earlycon=simplefb,0xb8000000,1440,3200 initcall_debug clk_ignore_unused pd_ignore_unused
+		bootargs = "keep_bootcon rootwait clk_ignore_unused pd_ignore_unused ignore_loglevel console=tty0 pmos.debug-shell PMOS_NOSPLASH"; //earlycon=simplefb,0xb8000000,1080,2400 initcall_debug clk_ignore_unused pd_ignore_unused
+		
+		framebuffer: framebuffer@b8000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xb8000000 0x0 0x2b00000>;
+			width = <1080>;
+			height = <2400>;
+			stride = <(1080 * 4)>;
+			format = "a8r8g8b8";
+
+			clocks = <&gcc GCC_DISP_AHB_CLK>, <&gcc GCC_DISP_HF_AXI_CLK>;
+		};
 	};
 
 	pmic-glink {
@@ -87,7 +97,15 @@
 						remote-endpoint = <&usb_1_dwc3_hs>;
 					};
 				};
+				/*
+				port@1 {
+					reg = <1>;
 
+					pmic_glink_ss_in: endpoint {
+						remote-endpoint = <&usb_dp_qmpphy_out>;
+					};
+				};
+				*/
 				port@2 {
 					reg = <2>;
 
@@ -100,59 +118,6 @@
 		};
 	};
 	
-	display_avdd: gpio-regulator {
-		compatible = "regulator-fixed";
-		regulator-name = "display_avdd";
-		regulator-min-microvolt = <5500000>;
-		regulator-max-microvolt = <5500000>;
-		regulator-enable-ramp-delay = <233>;
-		enable-active-high;
-		gpio = <&pm8550_gpios 11 0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&display_avdd_default>;
-		regulator-boot-on;
-		regulator-always-on;
-	};
-	
-	display_vci: gpio-regulator {
-		compatible = "regulator-fixed";
-		regulator-name = "display_vci";
-		regulator-min-microvolt = <3000000>;
-		regulator-max-microvolt = <3000000>;
-		enable-active-high;
-		gpio = <&tlmm 127 0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&display_vci_default>;
-		regulator-boot-on;
-		regulator-always-on;
-	};
-	
-	display_vddio: gpio-regulator {
-		compatible = "regulator-fixed";
-		regulator-name = "display_vddio";
-		regulator-min-microvolt = <1800000>;
-		regulator-max-microvolt = <1800000>;
-		enable-active-high;
-		gpio = <&tlmm 126 0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&display_vddio_default>;
-		regulator-boot-on;
-		regulator-always-on;
-	};
-	
-	display_vddd: gpio-regulator {
-		compatible = "regulator-fixed";
-		regulator-name = "display_vddd";
-		regulator-min-microvolt = <1500000>;
-		regulator-max-microvolt = <1500000>;
-		enable-active-high;
-		gpio = <&tlmm 42 0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&display_vddd_default>;
-		regulator-boot-on;
-		regulator-always-on;
-	};
-
 	vph_pwr: vph-pwr-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vph_pwr";
@@ -161,7 +126,7 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
-	
+
 	reserved-memory {
 		xbl_ramdump_mem: xbl-ramdump-region@81200000 {
 			reg = <0 0x81200000 0 0x280000>;
@@ -181,11 +146,7 @@
 			reg = <0 0x9ea00000 0 0x4680000>;
 			no-map;
 		};
-		/*
-		 * The rmtfs memory region in downstream is 'dynamically allocated'
-		 * but given the same address every time. Hard code it as this address is
-		 * where the modem firmware expects it to be.
-		 */
+
 		rmtfs_mem: rmtfs-region@f3500000 {
 			compatible = "qcom,rmtfs-mem";
 			reg = <0x0 0xf3500000 0x0 0x280000>;
@@ -194,16 +155,16 @@
 			qcom,client-id = <1>;
 			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
 		};
+
 		hwfence_shbuf: hwfence-shbuf-region@e6440000 {
 			reg = <0 0xe6440000 0 0x2dd000>;
 			no-map;
 		};
-	    ramoops@c0000000 {
-      		compatible = "ramoops";
-      		reg = <0x00 0xc0000000 0x00 0x400000>;
-      		console-size = <0x200000>;
-      		pmsg-size = <0x200000>;
-    	};
+
+		splash_region: splash_region@b8000000 {
+			reg = <0x0 0xb8000000 0x0 0x2b00000>;
+			no-map;
+		};
 	};
 };
 
@@ -286,8 +247,8 @@
 
 		vreg_l9b_2p9: ldo9 {
 			regulator-name = "vreg_l9b_2p9";
-			regulator-min-microvolt = <2960000>;
-			regulator-max-microvolt = <3008000>;
+			regulator-min-microvolt = <3200000>;
+			regulator-max-microvolt = <3200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -301,8 +262,8 @@
 
 		vreg_l11b_1p2: ldo11 {
 			regulator-name = "vreg_l11b_1p2";
-			regulator-min-microvolt = <1200000>;
-			regulator-max-microvolt = <1504000>;
+			regulator-min-microvolt = <1056000>;
+			regulator-max-microvolt = <1056000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -360,15 +321,15 @@
 
 		vreg_l1c_0p91: ldo1 {
 			regulator-name = "vreg_l1c_0p9";
-			regulator-min-microvolt = <1056000>;
+			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
 		vreg_l2c_1p056: ldo2 {
 			regulator-name = "vreg_l2c_0p1056";
-			regulator-min-microvolt = <870000>;
-			regulator-max-microvolt = <1056000>;
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -388,7 +349,7 @@
 
 		vreg_l1d_0p88: ldo1 {
 			regulator-name = "vreg_l1d_0p88";
-			regulator-min-microvolt = <880000>;
+			regulator-min-microvolt = <912000>;
 			regulator-max-microvolt = <920000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
@@ -413,7 +374,7 @@
 
 		vreg_s5e_1p1: smps5 {
 			regulator-name = "vreg_s5e_1p1";
-			regulator-min-microvolt = <1080000>;
+			regulator-min-microvolt = <1010000>;
 			regulator-max-microvolt = <1120000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
@@ -509,15 +470,6 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
-		/*
-		vreg_s3g_0p7: smps3 {
-			regulator-name = "vreg_s3g_0p7";
-			regulator-min-microvolt = <300000>;
-			regulator-max-microvolt = <1004000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		};
-		*/
-
 		vreg_s4g_1p3: smps4 {
 			regulator-name = "vreg_s4g_1p3";
 			regulator-min-microvolt = <1200000>;
@@ -581,8 +533,8 @@
 
 		vreg_l2m_1p056: ldo2 {
 			regulator-name = "vreg_l2m_1p056";
-			regulator-min-microvolt = <1056000>;
-			regulator-max-microvolt = <1056000>;
+			regulator-min-microvolt = <1104000>;
+			regulator-max-microvolt = <1104000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -595,8 +547,8 @@
 
 		vreg_l4m_2p8: ldo4 {
 			regulator-name = "vreg_l4m_2p8";
-			regulator-min-microvolt = <2800000>;
-			regulator-max-microvolt = <2800000>;
+			regulator-min-microvolt = <3104000>;
+			regulator-max-microvolt = <3104000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -617,15 +569,11 @@
 
 		vreg_l7m_2p9: ldo7 {
 			regulator-name = "vreg_l7m_2p9";
-			regulator-min-microvolt = <2800000>;
-			regulator-max-microvolt = <2904000>;
+			regulator-min-microvolt = <3104000>;
+			regulator-max-microvolt = <3104000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 	};
-};
-
-&dispcc {
- status = "okay";
 };
 
 &i2c_master_hub_0 {
@@ -657,116 +605,36 @@
 	vdd3-supply = <&vreg_l5b_3p1>;
 };
 
-&mdss {
-	status = "okay";
-};
-
-&mdss_dsi0 {
-	vdda-supply = <&vreg_l3e_1p2>;
-	status = "okay";
-
-	display_panel: panel@0 {
-		compatible = "samsung,amb673cp01-m2";
-		reg = <0>;
-
-		pinctrl-names = "default", "sleep";
-		pinctrl-0 = <&sde_dsi_active>, <&sde_te_active>;
-		pinctrl-1 = <&sde_dsi_suspend>, <&sde_te_suspend>;
-		reset-gpios = <&tlmm 133 GPIO_ACTIVE_LOW>;
-
-		avdd-supply = <&display_avdd>;
-		vci-supply = <&display_vci>;
-		vddio-supply = <&display_vddio>;
-		vddd-supply = <&display_vddd>;
-
-		port {
-			panel_in: endpoint {
-				remote-endpoint = <&mdss_dsi0_out>;
-			};
-		};
-	};
-};
-
-&mdss_dsi0_out {
-	status = "okay";
-	data-lanes = <0 1 2 3>;
-	remote-endpoint = <&panel_in>;
-};
-
-&mdss_dsi0_phy {
-	vdds-supply = <&vreg_l1e_0p88>;
-	status = "okay";
-};
-
-&gpu {
-	status = "okay";
+&pm8010_n {
+	status = "disabled";
 };
 
 &tlmm {
-	gpio-reserved-ranges = <32 8>;
-
-	sde_dsi_active: mdss-dsi-active-state {
-		pins = "gpio133";
-		function = "gpio";
-		drive-strength = <8>;
-		bias-pull-down;
-	};
-
-	sde_dsi_suspend: mdss-dsi-suspend-state {
-		pins = "gpio133";
-		function = "gpio";
-		drive-strength = <2>;
-		bias-pull-down;
-	};
-	
-	sde_te_active: sde-te-active-state {
-		pins = "gpio86";
-		function = "mdp_vsync";
-		drive-strength = <2>;
-		bias-pull-down;
-	};
-
-	sde_te_suspend: sde-te-suspend-state {
-		pins = "gpio86";
-		function = "mdp_vsync";
-		drive-strength = <2>;
-		bias-pull-down;
-	};
-	
-	display_vci_default: display-vci-default-state {
-		pins = "gpio127";
-		function = "gpio";
-		bias-disable;
-		drive-strength = <2>;
-	};
-	
-	display_vddio_default: display-vddio-default-state {
-		pins = "gpio126";
-		function = "gpio";
-		bias-disable;
-		drive-strength = <2>;
-	};
-	
-	display_vddd_default: display-vddd-default-state {
-		pins = "gpio42";
-		function = "gpio";
-		bias-disable;
-		drive-strength = <2>;
-	};
+    gpio-reserved-ranges = <32 8>;
 };
 
-&pm8550_gpios {
-	display_avdd_default: display-avdd-default-state {
-		pins = "gpio11";
-		function = "normal";
-		bias-disable;
-		output-enable;
-		drive-strength = <3>;
-	};
+&dispcc {
+    status = "disabled";
 };
 
-&pm8010_n {
-	status = "disabled";
+&mdss {
+    status = "disabled";
+};
+
+&mdss_dsi0 {
+    status = "disabled";
+};
+
+&mdss_dsi0_out {
+    status = "disabled";
+};
+
+&mdss_dsi0_phy {
+    status = "disabled";
+};
+
+&gpu {
+    status = "disabled";
 };
 
 &ufs_mem_hc {
@@ -788,18 +656,7 @@
 };
 
 &usb_1 {
-	/* USB 2.0 only */
-	qcom,select-utmi-as-pipe-clk;
 	status = "okay";
-};
-
-&usb_1_dwc3 {
-	dr_mode = "otg";
-	usb-role-switch;
-	maximum-speed = "high-speed";
-	/* Remove USB3 phy */
-	phys = <&usb_1_hsphy>;
-	phy-names = "usb2-phy";
 };
 
 &usb_1_dwc3_hs {
@@ -814,7 +671,18 @@
 
 	status = "okay";
 };
+/*
+&usb_dp_qmpphy {
+	vdda-phy-supply = <&vreg_l3e_1p2>;
+	vdda-pll-supply = <&vreg_l3f_0p91>;
 
+	status = "okay";
+};
+
+&usb_dp_qmpphy_out {
+	remote-endpoint = <&pmic_glink_ss_in>;
+};
+*/
 &sleep_clk {
 	clock-frequency = <32000>;
 };
@@ -822,5 +690,3 @@
 &xo_board {
 	clock-frequency = <76800000>;
 };
-
-#include "sm8550-xiaomi-nuwa-simplefb.dts"

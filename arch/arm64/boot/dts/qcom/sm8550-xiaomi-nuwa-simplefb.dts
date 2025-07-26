@@ -38,3 +38,7 @@
 &mdss_dsi0_phy {
     status = "disabled";
 };
+
+&gpu {
+    status = "disabled";
+};
